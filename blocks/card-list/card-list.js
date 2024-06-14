@@ -2,6 +2,7 @@ import ffetch from '../../scripts/ffetch.js';
 import { createCarousel } from '../carousel/carousel.js';
 import { createCard } from '../card/card.js';
 import { div, h2 } from '../../scripts/dom-helpers.js';
+import { getBlogsAndPublications } from '../recent-news-carousel/recent-news-carousel.js';
 
 const viewAllCategory = 'viewall';
 
@@ -25,6 +26,7 @@ const thumbnailAndLinkCardRender = await createCard({
 });
 
 const blogCardRender = await createCard({
+  showType: true,
   descriptionLength: 85,
 });
 
@@ -239,16 +241,19 @@ const VARIANTS = {
     cardRenderer: blogCardRender,
 
     async getData() {
-      return ffetch('/query-index.json')
-        .sheet('blog')
-        .all();
+      const data = await getBlogsAndPublications();
+      return data;
     },
 
     getCategories(item) {
-      const category = item.path
+      let category = item.path
         .split('/')[2];
 
       if (!category || category === 'blog') return null;
+
+      if (category === 'in-the-news' && item.category !== '0') {
+        category = item.category.split(' ').join('-');
+      }
 
       const filterableCategory = category.split('-')
         .map((s) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase())
@@ -317,8 +322,8 @@ const VARIANTS = {
 
       products = products.filter(
         (product) => product.subCategory === 'Accessories and Consumables'
-            && product.locale !== 'ZH'
-            && product.path !== '/products/accessories-consumables',
+          && product.locale !== 'ZH'
+          && product.path !== '/products/accessories-consumables',
       );
 
       products.sort((product1, product2) => product1.h1.localeCompare(product2.h1));
