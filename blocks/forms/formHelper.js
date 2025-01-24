@@ -46,6 +46,7 @@ export const formMapping = [
   { type: 'ebook-promo', id: 'b83700e4-f00b-4b92-9124-fab2968f60b5' },
   { type: 'app-note-promo', id: 'ed0daf7c-99c6-4fd8-aa32-13d4e053fa64' },
   { type: 'product-promo', id: 'cb509c1d-3c9d-4d8a-ac06-11f6e8fd14d0' },
+  { type: 'get-in-touch', id: '00d558ff-6cf3-4044-87d1-b94ea3f86b6d' },
 ];
 
 export function getFormId(type) {
@@ -148,10 +149,10 @@ export function createSalesforceForm(hubspotForm, formConfig) {
   const qdcCall = hubspotForm.querySelector('input[name="requested_a_salesperson_to_call__c"]');
   let qdc = '';
 
-  if (qdcCall && qdcCall.checked === true) {
+  if (qdcCall && qdcCall.checked) {
     qdc = 'Call';
   } else {
-    qdc = hubspotFormData.get('requested_qdc_discussion__c') || ''; // test case
+    qdc = hubspotForm.querySelector('input[name="requested_qdc_discussion__c"]').value || ''; // test case
   }
   if (qdc === '') {
     qdc = formConfig.qdc || '';
@@ -160,6 +161,15 @@ export function createSalesforceForm(hubspotForm, formConfig) {
   const elementqdcrequest = input({ name: QDCRrequest, value: qdc, type: 'hidden' });
   form.appendChild(elementqdcrequest);
 
+  // get-in-tough/contact form
+  const getInTouchInterests = hubspotForm.querySelector("select[name='get_in_touch_interests']");
+  if (getInTouchInterests.value === 'Sales' || getInTouchInterests.value === 'Tech support') {
+    elementqdcrequest.value = qdc;
+  } else {
+    elementqdcrequest.value = '';
+  }
+  // get-in-tough/contact form
+
   /* subscribe */
   let subscribe = hubspotForm.querySelector('input[name="subscribe"]');
   if (subscribe && subscribe.checked) {
@@ -167,7 +177,7 @@ export function createSalesforceForm(hubspotForm, formConfig) {
   } else {
     subscribe = 'false';
   }
-  // if (!subscribe) { subscribe = 'false'; }
+
   const elementmarketingoptin = input({ name: marketingOptin, value: subscribe, type: 'hidden' });
   form.appendChild(elementmarketingoptin);
 
@@ -212,17 +222,22 @@ export function createSalesforceForm(hubspotForm, formConfig) {
   form.appendChild(elementprodprimapp);
 
   document.body.appendChild(form);
+
   iframe.onload = () => {
     if (returnURL && returnURL !== 'null') {
       window.top.location.href = returnURL;
     }
   };
 
+  console.log(qdc);
+  console.log(returnURL);
   const allowedValues = ['Call', 'Demo', 'Quote'];
   if (allowedValues.includes(qdc)) {
     form.submit();
+    console.log('FORM SUBMITTED');
   } else if (returnURL && returnURL !== 'null') {
     setTimeout(() => { window.top.location.href = returnURL; }, 200);
+    console.log('ELSE');
   }
 }
 
